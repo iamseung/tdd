@@ -2,93 +2,85 @@ package io.hhplus.tdd.point
 
 import io.hhplus.tdd.database.PointHistoryTable
 import io.hhplus.tdd.database.UserPointTable
+import io.hhplus.tdd.point.lock.UserPointLockManager
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentMatchers.anyLong
-import org.mockito.InjectMocks
-import org.mockito.Mock
-import org.mockito.Mockito.times
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.verify
-import org.mockito.junit.jupiter.MockitoExtension
 
-@ExtendWith(MockitoExtension::class)
+@DisplayName("포인트 기능 테스트")
 class PointServiceTest {
 
-    @InjectMocks
     private lateinit var pointService: PointService
-
-    @Mock
     private lateinit var userPointTable: UserPointTable
-
-    @Mock
     private lateinit var pointHistoryTable: PointHistoryTable
+
+    private val lockManager = object : UserPointLockManager {
+        override fun <T> withLock(userId: Long, action: () -> T): T {
+            return action()
+        }
+    }
+
+    @BeforeEach
+    fun setUp() {
+        userPointTable = UserPointTable()
+        pointHistoryTable = PointHistoryTable()
+        pointService = PointService(userPointTable, pointHistoryTable, lockManager)
+    }
 
     @Test
     fun `특정 유저의 아이디를 기반으로 포인트를 조회할 수 있다`() {
         // given
         val userId = 1L
-        val expectedUserPoint = UserPoint(id = userId, point = 1000L, updateMillis = System.currentTimeMillis())
-
-        `when`(userPointTable.selectById(anyLong())).thenReturn(expectedUserPoint)
+        val expectedPoint = 1000L
+        userPointTable.insertOrUpdate(userId, expectedPoint)
 
         // when
         val result = pointService.getUserPoint(userId)
 
         // then
-        assertThat(result.id).isEqualTo(expectedUserPoint.id)
-        assertThat(result.point).isEqualTo(expectedUserPoint.point)
-        verify(userPointTable).selectById(userId)
+        assertThat(result.id).isEqualTo(userId)
+        assertThat(result.point).isEqualTo(expectedPoint)
     }
 
     @Test
     fun `특정 유저의 아이디를 기반으로 포인트 충전,이용 내역을 조회할 수 있다`() {
         // given
         val userId = 1L
-        val expectedPointHistories = listOf(
-            PointHistory(id = 1L, userId = userId, amount = 1000L, type = TransactionType.CHARGE, timeMillis = System.currentTimeMillis()),
-            PointHistory(id = 2L, userId = userId, amount = 2000L, type = TransactionType.USE, timeMillis = System.currentTimeMillis()),
-            PointHistory(id = 3L, userId = userId, amount = 3000L, type = TransactionType.CHARGE, timeMillis = System.currentTimeMillis()),
-        )
+        val chargeAmount = 1000L
+        val currentTimeMillis = System.currentTimeMillis()
 
-        `when`(pointHistoryTable.selectAllByUserId(anyLong())).thenReturn(expectedPointHistories)
+        pointHistoryTable.insert(userId, chargeAmount, TransactionType.CHARGE, currentTimeMillis)
 
         // when
         val results = pointService.getUserPointHistories(userId)
 
         // then
-        assertThat(results).hasSize(3)
-            .containsExactlyElementsOf(expectedPointHistories)
-
-        verify(pointHistoryTable).selectAllByUserId(userId)
+        assertThat(results).hasSize(1)
+        assertThat(results[0].userId).isEqualTo(userId)
+        assertThat(results[0].amount).isEqualTo(chargeAmount)
+        assertThat(results[0].type).isEqualTo(TransactionType.CHARGE)
     }
 
     @Test
     fun `특정 유저의 포인트를 충전할 수 있다`() {
         // given
         val userId = 1L
-        val initialPoint = 1000L
         val chargeAmount = 500L
-        val expectedPoint = initialPoint + chargeAmount
         val currentTimeMillis = System.currentTimeMillis()
-
-        val userPoint = UserPoint(id = userId, point = initialPoint, updateMillis = currentTimeMillis)
-        val chargedUserPoint = UserPoint(id = userId, point = expectedPoint, updateMillis = currentTimeMillis)
-
-        `when`(userPointTable.selectById(anyLong())).thenReturn(userPoint)
-        `when`(userPointTable.insertOrUpdate(anyLong(), anyLong())).thenReturn(chargedUserPoint)
 
         // when
         val result = pointService.chargeUserPoint(userId, chargeAmount, currentTimeMillis)
 
         // then
-        assertThat(result.point).isEqualTo(expectedPoint)
+        assertThat(result.point).isEqualTo(chargeAmount)
 
-        verify(userPointTable, times(1)).selectById(anyLong())
-        verify(userPointTable, times(1)).insertOrUpdate(anyLong(), anyLong())
-        verify(pointHistoryTable, times(1)).insert(userId, chargeAmount, TransactionType.CHARGE, currentTimeMillis)
+        // 히스토리도 함께 검증
+        val histories = pointService.getUserPointHistories(userId)
+        assertThat(histories).hasSize(1)
+        assertThat(histories[0].type).isEqualTo(TransactionType.CHARGE)
+        assertThat(histories[0].amount).isEqualTo(chargeAmount)
     }
 
     @Test
@@ -97,24 +89,20 @@ class PointServiceTest {
         val userId = 1L
         val initialPoint = 1000L
         val useAmount = 500L
-        val expectedPoint = initialPoint - useAmount
         val currentTimeMillis = System.currentTimeMillis()
 
-        val userPoint = UserPoint(id = userId, point = initialPoint, updateMillis = currentTimeMillis)
-        val usedUserPoint = UserPoint(id = userId, point = expectedPoint, updateMillis = currentTimeMillis)
-
-        `when`(userPointTable.selectById(anyLong())).thenReturn(userPoint)
-        `when`(userPointTable.insertOrUpdate(anyLong(), anyLong())).thenReturn(usedUserPoint)
+        userPointTable.insertOrUpdate(userId, initialPoint)
 
         // when
         val result = pointService.useUserPoint(userId, useAmount, currentTimeMillis)
 
         // then
-        assertThat(result.point).isEqualTo(expectedPoint)
+        assertThat(result.point).isEqualTo(initialPoint - useAmount)
 
-        verify(userPointTable, times(1)).selectById(anyLong())
-        verify(userPointTable, times(1)).insertOrUpdate(anyLong(), anyLong())
-        verify(pointHistoryTable, times(1)).insert(userId, useAmount, TransactionType.USE, currentTimeMillis)
+        val histories = pointService.getUserPointHistories(userId)
+        assertThat(histories).hasSize(1)
+        assertThat(histories[0].type).isEqualTo(TransactionType.USE)
+        assertThat(histories[0].amount).isEqualTo(useAmount)
     }
 
     @Test
@@ -125,8 +113,7 @@ class PointServiceTest {
         val useAmount = 1000L
         val currentTimeMillis = System.currentTimeMillis()
 
-        val userPoint = UserPoint(userId, initialPoint, currentTimeMillis)
-        `when`(userPointTable.selectById(userId)).thenReturn(userPoint)
+        userPointTable.insertOrUpdate(userId, initialPoint)
 
         // when & then
         val exception = assertThrows<IllegalArgumentException> {

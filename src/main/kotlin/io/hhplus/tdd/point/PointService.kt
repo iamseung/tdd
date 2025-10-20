@@ -2,14 +2,15 @@ package io.hhplus.tdd.point
 
 import io.hhplus.tdd.database.PointHistoryTable
 import io.hhplus.tdd.database.UserPointTable
+import io.hhplus.tdd.point.lock.UserPointLockManager
 import org.springframework.stereotype.Service
 
 @Service
 class PointService(
     private val userPointTable: UserPointTable,
     private val pointHistoryTable: PointHistoryTable,
+    private val lockManager: UserPointLockManager,
 ) {
-
     /**
      * Get user point
      *
@@ -38,13 +39,15 @@ class PointService(
      * @return
      */
     fun chargeUserPoint(id: Long, amount: Long, currentTimeMillis: Long): UserPoint {
-        val userPoint = userPointTable.selectById(id)
-        userPoint.validatePositivePoint(amount)
+        return lockManager.withLock(id) {
+            val userPoint = userPointTable.selectById(id)
+            userPoint.validatePositivePoint(amount)
 
-        val updatedPoint = userPointTable.insertOrUpdate(id, userPoint.point + amount)
-        saveHistory(id, amount, TransactionType.CHARGE, currentTimeMillis)
+            val updatedPoint = userPointTable.insertOrUpdate(id, userPoint.point + amount)
+            saveHistory(id, amount, TransactionType.CHARGE, currentTimeMillis)
 
-        return updatedPoint
+            updatedPoint
+        }
     }
 
     /**
@@ -55,13 +58,15 @@ class PointService(
      * @return
      */
     fun useUserPoint(id: Long, amount: Long, currentTimeMillis: Long): UserPoint {
-        val userPoint = userPointTable.selectById(id)
-        userPoint.validateSufficientPoints(amount)
+        return lockManager.withLock(id) {
+            val userPoint = userPointTable.selectById(id)
+            userPoint.validateSufficientPoints(amount)
 
-        val updatedPoint = userPointTable.insertOrUpdate(id, userPoint.point - amount)
-        saveHistory(id, amount, TransactionType.USE, currentTimeMillis)
+            val updatedPoint = userPointTable.insertOrUpdate(id, userPoint.point - amount)
+            saveHistory(id, amount, TransactionType.USE, currentTimeMillis)
 
-        return updatedPoint
+            updatedPoint
+        }
     }
 
     /**
