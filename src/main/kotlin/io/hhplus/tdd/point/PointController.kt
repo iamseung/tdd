@@ -12,9 +12,6 @@ class PointController(
 ) {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    /**
-     * TODO - 특정 유저의 포인트를 조회하는 기능을 작성해주세요.
-     */
     @GetMapping("{id}")
     fun point(
         @PathVariable id: Long,
@@ -22,9 +19,6 @@ class PointController(
         return pointService.getUserPoint(id)
     }
 
-    /**
-     * TODO - 특정 유저의 포인트 충전/이용 내역을 조회하는 기능을 작성해주세요.
-     */
     @GetMapping("{id}/histories")
     fun history(
         @PathVariable id: Long,
@@ -32,9 +26,6 @@ class PointController(
         return pointService.getUserPointHistories(id)
     }
 
-    /**
-     * TODO - 특정 유저의 포인트를 충전하는 기능을 작성해주세요.
-     */
     @PatchMapping("{id}/charge")
     fun charge(
         @PathVariable id: Long,
@@ -44,9 +35,6 @@ class PointController(
         return pointService.chargeUserPoint(id, amount, currentTimeMillis)
     }
 
-    /**
-     * TODO - 특정 유저의 포인트를 사용하는 기능을 작성해주세요.
-     */
     @PatchMapping("{id}/use")
     fun use(
         @PathVariable id: Long,

@@ -51,7 +51,7 @@ class PointService(
     }
 
     /**
-     * Use \user point
+     * Use user point
      *
      * @param id
      * @param amount
