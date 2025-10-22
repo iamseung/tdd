@@ -6,18 +6,19 @@ data class UserPoint(
     val updateMillis: Long,
 ) {
     fun validateSufficientPoints(amount: Long) {
-        require(amount > 0) {
-            "Amount must be positive. Given: $amount"
-        }
-
+        validatePositiveAmount(amount)
         require(this.point >= amount) {
             "Not enough point. Current: ${this.point}, Required: $amount"
         }
     }
 
     fun validatePositivePoint(amount: Long) {
+        validatePositiveAmount(amount)
+    }
+
+    private fun validatePositiveAmount(amount: Long) {
         require(amount > 0) {
-            "Point must be positive. Given: $amount"
+            "Amount must be positive. Given: $amount"
         }
     }
 }

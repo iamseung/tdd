@@ -59,7 +59,7 @@ class UserPointTest {
         }
 
         // then
-        assertThat(exception.message).contains("Point must be positive.")
+        assertThat(exception.message).contains("Amount must be positive.")
         assertThat(exception.message).contains("Given: -1000")
     }
 
@@ -75,7 +75,7 @@ class UserPointTest {
         }
 
         // then
-        assertThat(exception.message).contains("Point must be positive.")
+        assertThat(exception.message).contains("Amount must be positive.")
         assertThat(exception.message).contains("Given: 0")
     }
 }

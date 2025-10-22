@@ -1,16 +1,13 @@
 package io.hhplus.tdd.point
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
-import java.lang.System.*
+import java.lang.System.currentTimeMillis
 
 @RestController
 @RequestMapping("/point")
 class PointController(
     private val pointService: PointService
 ) {
-    private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     @GetMapping("{id}")
     fun point(

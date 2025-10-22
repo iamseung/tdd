@@ -3,6 +3,7 @@ package io.hhplus.tdd.point.lock
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 @Component
 class InMemoryUserPointLockManager : UserPointLockManager {
@@ -26,12 +27,8 @@ class InMemoryUserPointLockManager : UserPointLockManager {
      * @return result of action
      */
     override fun <T> withLock(userId: Long, action: () -> T): T {
-        val lock = getLock(userId)
-        lock.lock()
-        try {
-            return action()
-        } finally {
-            lock.unlock()
+        return getLock(userId).withLock {
+            action()
         }
     }
 }
