@@ -2,6 +2,7 @@ package io.hhplus.tdd.point
 
 import io.hhplus.tdd.database.PointHistoryTable
 import io.hhplus.tdd.database.UserPointTable
+import io.hhplus.tdd.point.exception.InsufficientPointException
 import io.hhplus.tdd.point.lock.InMemoryUserPointLockManager
 import io.hhplus.tdd.point.lock.UserPointLockManager
 import org.assertj.core.api.Assertions.assertThat
@@ -125,7 +126,7 @@ class PointServiceConcurrencyTest {
             executor.submit {
                 try {
                     pointService.useUserPoint(userId, useAmount, currentTimeMillis)
-                } catch (e: IllegalArgumentException) {
+                } catch (e: InsufficientPointException) {
                     // 포인트 부족 예외는 정상적인 경우
                 } finally {
                     latch.countDown()
@@ -209,7 +210,7 @@ class PointServiceConcurrencyTest {
                 try {
                     pointService.useUserPoint(userId, useAmount, currentTimeMillis)
                     successCount.incrementAndGet()
-                } catch (e: IllegalArgumentException) {
+                } catch (e: InsufficientPointException) {
                     failCount.incrementAndGet()
                 } finally {
                     latch.countDown()

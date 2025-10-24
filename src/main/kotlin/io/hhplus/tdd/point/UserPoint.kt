@@ -1,5 +1,8 @@
 package io.hhplus.tdd.point
 
+import io.hhplus.tdd.point.exception.InsufficientPointException
+import io.hhplus.tdd.point.exception.InvalidAmountException
+
 data class UserPoint(
     val id: Long,
     val point: Long,
@@ -7,8 +10,8 @@ data class UserPoint(
 ) {
     fun validateSufficientPoints(amount: Long) {
         validatePositiveAmount(amount)
-        require(this.point >= amount) {
-            "Not enough point. Current: ${this.point}, Required: $amount"
+        if (this.point < amount) {
+            throw InsufficientPointException(this.point, amount)
         }
     }
 
@@ -17,8 +20,8 @@ data class UserPoint(
     }
 
     private fun validatePositiveAmount(amount: Long) {
-        require(amount > 0) {
-            "Amount must be positive. Given: $amount"
+        if (amount <= 0) {
+            throw InvalidAmountException(amount)
         }
     }
 }

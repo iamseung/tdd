@@ -1,5 +1,7 @@
 package io.hhplus.tdd.point
 
+import io.hhplus.tdd.point.exception.InsufficientPointException
+import io.hhplus.tdd.point.exception.InvalidAmountException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -26,13 +28,15 @@ class UserPointTest {
         val useAmount = 1000L
 
         // when & then
-        val exception = assertThrows<IllegalArgumentException> {
+        val exception = assertThrows<InsufficientPointException> {
             userPoint.validateSufficientPoints(useAmount)
         }
 
         assertThat(exception.message).contains("Not enough point")
         assertThat(exception.message).contains("Current: 500")
         assertThat(exception.message).contains("Required: 1000")
+        assertThat(exception.currentPoint).isEqualTo(500L)
+        assertThat(exception.requiredPoint).isEqualTo(1000L)
     }
 
     @Test
@@ -54,13 +58,14 @@ class UserPointTest {
         val chargeAmount = -1000L
 
         // when
-        val exception = assertThrows<IllegalArgumentException> {
+        val exception = assertThrows<InvalidAmountException> {
             userPoint.validatePositivePoint(chargeAmount)
         }
 
         // then
         assertThat(exception.message).contains("Amount must be positive.")
         assertThat(exception.message).contains("Given: -1000")
+        assertThat(exception.amount).isEqualTo(-1000L)
     }
 
     @Test
@@ -70,12 +75,13 @@ class UserPointTest {
         val chargeAmount = 0L
 
         // when
-        val exception = assertThrows<IllegalArgumentException> {
+        val exception = assertThrows<InvalidAmountException> {
             userPoint.validatePositivePoint(chargeAmount)
         }
 
         // then
         assertThat(exception.message).contains("Amount must be positive.")
         assertThat(exception.message).contains("Given: 0")
+        assertThat(exception.amount).isEqualTo(0L)
     }
 }

@@ -96,8 +96,10 @@ class PointControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidAmount.toString())
         )
-            .andExpect(status().isInternalServerError)
-            .andExpect(jsonPath("$.code").value("500"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("INVALID_AMOUNT"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.timestamp").exists())
     }
 
     @Test
@@ -134,8 +136,10 @@ class PointControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidAmount.toString())
         )
-            .andExpect(status().isInternalServerError)
-            .andExpect(jsonPath("$.code").value("500"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("INVALID_AMOUNT"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.timestamp").exists())
     }
 
     @Test
@@ -153,7 +157,9 @@ class PointControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(useAmount.toString())
         )
-            .andExpect(status().isInternalServerError)
-            .andExpect(jsonPath("$.code").value("500"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("INSUFFICIENT_POINT"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.timestamp").exists())
     }
 }

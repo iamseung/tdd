@@ -2,6 +2,7 @@ package io.hhplus.tdd.point
 
 import io.hhplus.tdd.database.PointHistoryTable
 import io.hhplus.tdd.database.UserPointTable
+import io.hhplus.tdd.point.exception.InsufficientPointException
 import io.hhplus.tdd.point.lock.UserPointLockManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -116,10 +117,12 @@ class PointServiceTest {
         userPointTable.insertOrUpdate(userId, initialPoint)
 
         // when & then
-        val exception = assertThrows<IllegalArgumentException> {
+        val exception = assertThrows<InsufficientPointException> {
             pointService.useUserPoint(userId, useAmount, currentTimeMillis)
         }
 
         assertThat(exception.message).contains("Not enough point")
+        assertThat(exception.currentPoint).isEqualTo(initialPoint)
+        assertThat(exception.requiredPoint).isEqualTo(useAmount)
     }
 }
