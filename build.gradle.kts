@@ -32,7 +32,7 @@ java {
 }
 
 with(extensions.getByType(JacocoPluginExtension::class.java)) {
-    toolVersion = "0.8.7"
+    toolVersion = "0.8.12"
 }
 
 tasks.withType<KotlinCompile> {
